@@ -1,3 +1,10 @@
+# Sobre este proyecto.
+
+Proyecto realizado con NextJS, para aprender a utilizar esta tecnologia. El proyecto es un clon de ProjectHunt. Mientras se vaya avanzando el proyecto, mas informacion sera agregada al README.
+
+
+# Information 
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
