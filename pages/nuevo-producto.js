@@ -1,46 +1,98 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { css } from '@emotion/core';
-import Router from 'next/router';
+import Router, { useRouter } from 'next/router';
+import FileUploader from 'react-firebase-file-uploader';
 import Layout from '../components/layout/Layout';
 import { Formulario, Campo, InputSubmit, Error } from '../components/UI/Formulario';
 
-import firebase from '../firebase';
+import { FirebaseContext } from '../firebase';
+
 
 //Validaciones.
 import useValidacion from '../hooks/useValidacion';
-import validarCrearCuenta from '../validacion/validarCrearCuenta';
+import validarCrearProducto from '../validacion/validarCrearProducto';
 
 const STATE_INICIAL = {
     nombre: '',
     empresa: '',
     imagen: '',
     url: '',
+    urlimagen: '',
     descripcion: ''
 };
 
 const NuevoProducto = () => {
 
+    //State de las imagenes.
+    const [nombreimagen, setNombreImagen] = useState('');
+    const [subiendo, setSubiendo] = useState(false);
+    const [progreso, setProgreso] = useState(0);
+    const [urlimagen, setUrlImagen] = useState('');
+
+
     const [error, setError] = useState(false);
 
-    const { valores, errores, handleSubmit, handleChange, handleBlur } = useValidacion(STATE_INICIAL, validarCrearCuenta, crearCuenta);
+    const { valores, errores, handleSubmit, handleChange, handleBlur } = useValidacion(STATE_INICIAL, validarCrearProducto, nuevoProducto);
 
     const { nombre, empresa, imagen, url, descripcion } = valores;
 
-    async function crearCuenta() {
+    //Hook de routing para redireccionar.
+    const router = useRouter();
 
-        try {
-            await firebase.registrar(nombre, email, password);
+    //Context con las operaciones CRUD de firebase.
+    const { usuario, firebase } = useContext(FirebaseContext);
 
-            Router.push('/');
+    async function nuevoProducto() {
 
-        } catch (error) {
-
-            console.error('Hubo un error al crear el usuario', error.message);
-            setError(error.message);
+        //Si el usuario no esta autenticado.
+        if (!usuario) {
+            return router.push('/login');
         }
+
+        //Crear el objeto de nuevo producto.
+
+        const producto = {
+            nombre,
+            empresa,
+            url,
+            urlimagen,
+            descripcion,
+            votos: 0,
+            comentarios: [],
+            creado: Date.now()
+        }
+
+        //Insertarlo en la base de datos.
+        firebase.db.collection('productos').add(producto);
 
     }
 
+    const handleUploadStart = () => {
+        setProgreso(0);
+        setSubiendo(true);
+    };
+
+    const handleProgress = (progreso) => setProgreso({ progreso });
+
+    const handleUploadError = (error) => {
+        setSubiendo(error);
+        console.error(error);
+    };
+
+    const handleUploadSuccess = (nombre) => {
+        setProgreso(100);
+        setSubiendo(false);
+        setNombreImagen(nombre);
+        firebase
+            .storage
+            .ref("productos")
+            .child(nombre)
+            .getDownloadURL()
+            .then(url => {
+                console.log(url);
+                setUrlImagen(url);
+            });
+    };
 
     return (
         <div>
@@ -70,7 +122,7 @@ const NuevoProducto = () => {
                             <input
                                 type="text"
                                 id="nombre"
-                                placeholder="Tu nombre"
+                                placeholder="Nombre del producto"
                                 name="nombre"
                                 value={nombre}
                                 onChange={handleChange}
@@ -85,7 +137,7 @@ const NuevoProducto = () => {
                             <input
                                 type="text"
                                 id="empresa"
-                                placeholder="Tu empresa"
+                                placeholder="Nombre de la empresa o compañia"
                                 name="empresa"
                                 value={empresa}
                                 onChange={handleChange}
@@ -93,17 +145,19 @@ const NuevoProducto = () => {
                             />
                         </Campo>
 
-                        {errores.imagen && <Error> {errores.imagen} </Error>}
 
                         <Campo>
                             <label htmlFor="imagen"> Imagen </label>
-                            <input
-                                type="file"
+                            <FileUploader
+                                accept="image/*"
                                 id="imagen"
                                 name="imagen"
-                                value={imagen}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
+                                randomizeFileName
+                                storageRef={firebase.storage.ref("producto")}
+                                onUploadStart={handleUploadStart}
+                                onUploadError={handleUploadError}
+                                onUploadSuccess={handleUploadSuccess}
+                                onProgress={handleProgress}
                             />
                         </Campo>
 
@@ -113,6 +167,7 @@ const NuevoProducto = () => {
                             <label htmlFor="url"> Url </label>
                             <input
                                 type="url"
+                                placeholder="URL de tu producto"
                                 id="url"
                                 name="url"
                                 value={url}
