@@ -65,6 +65,8 @@ const NuevoProducto = () => {
         //Insertarlo en la base de datos.
         firebase.db.collection('productos').add(producto);
 
+        return router.push('/');
+
     }
 
     const handleUploadStart = () => {
@@ -153,7 +155,7 @@ const NuevoProducto = () => {
                                 id="imagen"
                                 name="imagen"
                                 randomizeFileName
-                                storageRef={firebase.storage.ref("producto")}
+                                storageRef={firebase.storage.ref("productos")}
                                 onUploadStart={handleUploadStart}
                                 onUploadError={handleUploadError}
                                 onUploadSuccess={handleUploadSuccess}
