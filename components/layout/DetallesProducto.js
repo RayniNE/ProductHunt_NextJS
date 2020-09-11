@@ -94,6 +94,7 @@ const Votos = styled.div`
 const DetallesProductos = ({ producto }) => {
 
     const { id, comentarios, creado, descripcion, empresa, nombre, url, urlimagen, votos } = producto;
+    
     return (
 
         <Producto>
