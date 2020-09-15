@@ -9,6 +9,7 @@ import Error404 from '../../components/layout/404';
 import { css } from '@emotion/core';
 import styled from '@emotion/styled';
 import { Campo, InputSubmit } from '../../components/UI/Formulario';
+import Boton from '../../components/UI/Boton';
 
 const ContenedorProducto = styled.div`
 
@@ -31,7 +32,7 @@ const Producto = () => {
     const { query: { id } } = router;
 
     //Context de firebase.
-    const {firebase} = useContext(FirebaseContext);
+    const {firebase, usuario} = useContext(FirebaseContext);
 
     useEffect(() => {
 
@@ -49,11 +50,36 @@ const Producto = () => {
             obtenerProducto();
         }
 
-    },[id])
+    },[id, producto])
 
     if(Object.keys(producto).length === 0) return 'Cargando..'
 
-    const {comentarios, creado, descripcion, empresa, nombre, url, urlimagen, votos } = producto;
+    const {comentarios, creado, descripcion, empresa, nombre, url, creador, urlimagen, votos, haVotado } = producto;
+
+    //Administrar y validar los votos.
+    const votarProducto = () => {
+        if(!usuario){
+            return router.push('/login');
+        }
+
+        //Obtener y sumar un nuevo voto.
+        const nuevoTotal = votos + 1;
+
+        //Verificar si el usuario actual ha votado.
+        if(haVotado.includes(usuario.uid)) return;
+
+        //Guardar el id del usuario que ha votado.
+        const nuevoHaVotado = [...haVotado, usuario.uid];
+        
+        //Actualizar en la base de datos.
+        firebase.db.collection('productos').doc(id).update({votos: nuevoTotal, haVotado: nuevoHaVotado});
+
+        //Actualizar el State.
+        setProducto({
+            ...producto,
+            votos: nuevoTotal
+        });
+    }
 
 
     return ( 
@@ -75,26 +101,32 @@ const Producto = () => {
                     <ContenedorProducto>
                         <div>
                             <p> Publicado hace: { formatDistanceToNow(new Date(creado), {locale: es})} </p>
+                            <p> Creador por: {creador.nombre} de {empresa}</p>
 
                             <img src={urlimagen}/>
 
                             <p> {descripcion} </p>
 
-                            <h2> Agrega tu comentario </h2>
+                            { usuario && (
+                                <>
 
-                            <form>
-                                <Campo>
-                                    <input
-                                        type="text"
-                                        name="mensaje"
-                                    />
-                                </Campo>
+                                    <h2> Agrega tu comentario </h2>
 
-                                <InputSubmit
-                                    type="submit"
-                                    value="Agregar comentario"
-                                />
-                            </form>
+                                    <form>
+                                        <Campo>
+                                            <input
+                                                type="text"
+                                                name="mensaje"
+                                            />
+                                        </Campo>
+        
+                                        <InputSubmit
+                                            type="submit"
+                                            value="Agregar comentario"
+                                        />
+                                    </form>
+                                </>
+                            )}
 
                             <h2
                                 css={css`
@@ -111,7 +143,28 @@ const Producto = () => {
                         </div>
 
                         <aside>
-                            2
+                            <Boton
+                                target="_blank"
+                                bgColor="true"
+                                href={url}
+                            > Visitar URL </Boton>
+
+                                
+
+                            <div
+                                css={css`
+                                    margin-top: 5rem;
+                                `}
+                            >
+                                <p
+                                css={css`
+                                    text-align: center;
+                                `}> {votos} votos</p>
+
+                                <Boton
+                                    onClick={votarProducto}
+                                > Votar </Boton>
+                            </div>
                         </aside>
                     </ContenedorProducto>
 

@@ -7,6 +7,8 @@ import { Formulario, Campo, InputSubmit, Error } from '../components/UI/Formular
 
 import { FirebaseContext } from '../firebase';
 
+import Error404 from '../components/layout/404';
+
 
 //Validaciones.
 import useValidacion from '../hooks/useValidacion';
@@ -42,6 +44,7 @@ const NuevoProducto = () => {
     //Context con las operaciones CRUD de firebase.
     const { usuario, firebase } = useContext(FirebaseContext);
 
+
     async function nuevoProducto() {
 
         //Si el usuario no esta autenticado.
@@ -59,7 +62,12 @@ const NuevoProducto = () => {
             descripcion,
             votos: 0,
             comentarios: [],
-            creado: Date.now()
+            creado: Date.now(),
+            creador: {
+                id: usuario.uid,
+                nombre: usuario.displayName
+            },
+            haVotado: []
         }
 
         //Insertarlo en la base de datos.
@@ -96,12 +104,15 @@ const NuevoProducto = () => {
             });
     };
 
+
     return (
         <div>
 
             <Layout>
 
-                <h1
+                {!usuario ? <Error404 msg="No se puede mostrar"/> : (
+                    <>
+                    <h1
                     css={css`
                         text-align: center;
                         margin-top: 5rem;
@@ -206,6 +217,10 @@ const NuevoProducto = () => {
                     />
 
                 </Formulario>
+                </>
+                )}
+
+                
 
             </Layout>
 
