@@ -162,7 +162,7 @@ const NuevoProducto = () => {
                     id="imagen"
                     name="imagen"
                     randomizeFileName
-                    storageRef={firebase.storage.ref("productos")}
+                    storageRef={firebase.storage().ref("productos")}
                     onUploadStart={handleUploadStart}
                     onUploadError={handleUploadError}
                     onUploadSuccess={handleUploadSuccess}
